@@ -75,4 +75,8 @@
 	<a href="https://weblate.org" target="_blank">
 		<Icons.Weblate />
 	</a>
+{:else if service.type === 'portainer'}
+	<a href="https://portainer.io" target="_blank">
+		<Icons.Portainer />
+	</a>
 {/if}
