@@ -15,9 +15,9 @@
 	recommendedVersion: 'postgresql-latest',
 	// Application's default port, Umami listens on 3000
 	ports: {
-	  main: 3000
+		main: 3000
 	}
-  }
+	}
 */
 export const supportedServiceTypesAndVersions = [
 	{
@@ -172,7 +172,7 @@ export const supportedServiceTypesAndVersions = [
 		fancyName: 'Appwrite',
 		baseImage: 'appwrite/appwrite',
 		images: ['mariadb:10.7', 'redis:6.2-alpine', 'appwrite/telegraf:1.4.0'],
-		versions: ['latest', '1.0','0.15.3'],
+		versions: ['latest', '1.0', '0.15.3'],
 		recommendedVersion: '0.15.3',
 		ports: {
 			main: 80
@@ -233,4 +233,15 @@ export const supportedServiceTypesAndVersions = [
 	// 		main: 80
 	// 	}
 	// },
+	{
+		name: 'portainer',
+		fancyName: 'Portainer',
+		baseImage: 'portainer/portainer-ce',
+		images: [],
+		versions: ['latest'],
+		recommendedVersion: 'latest',
+		ports: {
+			main: 9443
+		}
+	}
 ];

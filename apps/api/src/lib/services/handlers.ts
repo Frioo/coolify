@@ -69,6 +69,9 @@ export async function startService(request: FastifyRequest<ServiceStartStop>) {
         if (type === 'taiga') {
             return await startTaigaService(request)
         }
+        if (type === 'portainer') {
+            return await startPortainerService(request);
+        }
         throw `Service type ${type} not supported.`
     } catch (error) {
         throw { status: 500, message: error?.message || error }
@@ -2640,3 +2643,66 @@ async function startTaigaService(request: FastifyRequest<ServiceStartStop>) {
     }
 }
 
+async function startPortainerService(request: FastifyRequest<ServiceStartStop>) {
+    try {
+        const { id } = request.params;
+        const teamId = request.user.teamId;
+        const service = await getServiceFromDB({ id, teamId });
+        const {
+            type, version, destinationDockerId, destinationDocker, serviceSecret, exposePort, persistentStorage, fqdn,
+            portainer: { agentPort }
+        } = service;
+
+        const network = destinationDockerId && destinationDocker.network;
+        const port = getServiceMainPort('portainer');
+
+        const { workdir } = await createDirectories({ repository: type, buildId: id });
+        const image = getServiceImage(type);
+        //const isHttps = fqdn.startsWith('https://');
+
+        const config = {
+            portainer: {
+                image: `${image}:${version}`,
+                volumes: ['/var/run/docker.sock:/var/run/docker.sock', `${id}-portainer-data:/data`],
+                environmentVariables: {},
+            },
+        };
+
+        if (serviceSecret.length > 0) {
+            serviceSecret.forEach((secret) => {
+                config.portainer.environmentVariables[secret.name] = secret.value;
+            });
+        }
+
+        // TODO: Find a better way to pass the volumes here
+        // Passing the `config` also passes the docker socket, which in turn causes 'additional property is not allowed' error
+        const { volumeMounts } = persistentVolumes(id, persistentStorage, { portainer: { ...config.portainer, volumes: [`${id}-portainer-data:/data`] } })
+        const composeFile: ComposeFile = {
+            version: '3.8',
+            services: {
+                [id]: {
+                    container_name: id,
+                    image: config.portainer.image,
+                    volumes: config.portainer.volumes,
+                    environment: config.portainer.environmentVariables,
+                    ...(exposePort ? { ports: [`${exposePort}:${port}`] } : {}),
+                    labels: makeLabelForServices('portainer'),
+                    ...defaultComposeConfiguration(network),
+                }
+            },
+            networks: {
+                [network]: {
+                    external: true
+                }
+            },
+            volumes: volumeMounts,
+        };
+        const composeFileDestination = `${workdir}/docker-compose.yaml`;
+        await fs.writeFile(composeFileDestination, yaml.dump(composeFile));
+        console.log(yaml.dump(composeFile));
+        await startServiceContainers(destinationDocker.id, composeFileDestination);
+        return {}
+    } catch ({ status, message }) {
+        return errorHandler({ status, message });
+    }
+}
