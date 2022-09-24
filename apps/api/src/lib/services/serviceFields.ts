@@ -865,3 +865,22 @@ export const taiga = [{
 	isBoolean: false,
 	isEncrypted: false
 }]
+
+/* export const portainer = [
+	{
+		name: 'port',
+		isEditable: true,
+		isLowerCase: false,
+		isNumber: true,
+		isBoolean: false,
+		isEncrypted: false
+	},
+	{
+		name: 'agentPort',
+		isEditable: true,
+		isLowerCase: false,
+		isNumber: true,
+		isBoolean: false,
+		isEncrypted: false
+	},
+] */
